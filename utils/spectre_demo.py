@@ -128,14 +128,13 @@ def main(args):
     # create lists of overlapping indices
     indices = list(range(len(image_paths)))
     overlapping_indices = [indices[i : i + L] for i in range(0, len(indices), L - 4)]
-
     if len(overlapping_indices[-1]) < 5:
         # if the last chunk has less than 5 frames, pad it with the semilast frame
         overlapping_indices[-2] = overlapping_indices[-2] + overlapping_indices[-1]
         overlapping_indices[-2] = np.unique(overlapping_indices[-2]).tolist()
         overlapping_indices = overlapping_indices[:-1]
 
-    overlapping_indices = np.array(overlapping_indices)
+    overlapping_indices = np.array(overlapping_indices, dtype=object)
 
     image_paths = np.array(image_paths)  # do this to index with multiple indices
     all_shape_images = []

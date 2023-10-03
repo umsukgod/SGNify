@@ -16,11 +16,11 @@ dependencies:
   - numpy
   - omegaconf
   - openh264
-  - pyrender==0.1.23
+  - pyrender
   - pytorch
   - pytorch-cuda
   - pytorch3d::pytorch3d
-  - scikit-learn
+  - scikit-learn==1.2.2
   - torchvision
   - tqdm
   - trimesh
@@ -29,7 +29,7 @@ dependencies:
     - -e ./spectre/external/face_alignment
     - -e ./spectre/external/face_detection
     - git+https://github.com/muelea/selfcontact
-    - git+https://github.com/nghorbani/ViTPose
+    - git+https://github.com/nghorbani/ViTPose@fc8d078f3fc7ccbc3c7c17ebdfe09e45576b3d26
     - human-body-prior
     - importlib-resources
     - mediapipe

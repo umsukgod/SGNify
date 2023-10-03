@@ -375,27 +375,27 @@ def main(args):
         # 3. Run SMPLify-X on frames selected that have MP keypoints
         # This provides the RPS and betas
         # Link images and keypoints of the selected frames in a new folder
-        if np.any(valid_frames_right > -1):
-            print("Running SMPLify-X inside segmentation window for right hand...")
-            compute_smpl_x_poses(
-                rps_folder=rps_folder,
-                result_folder=result_folder,
-                images_folder=images_folder,
-                valid_frames=reconstruct_right,
-                weights=valid_frames_right,
-                hand="right",
-            )
+        # if np.any(valid_frames_right > -1):
+        #     print("Running SMPLify-X inside segmentation window for right hand...")
+        #     compute_smpl_x_poses(
+        #         rps_folder=rps_folder,
+        #         result_folder=result_folder,
+        #         images_folder=images_folder,
+        #         valid_frames=reconstruct_right,
+        #         weights=valid_frames_right,
+        #         hand="right",
+        #     )
 
-        if np.any(valid_frames_left > -1):
-            print("Running SMPLify-X inside segmentation window for left hand...")
-            compute_smpl_x_poses(
-                rps_folder=rps_folder,
-                result_folder=result_folder,
-                images_folder=images_folder,
-                valid_frames=reconstruct_left,
-                weights=valid_frames_left,
-                hand="left",
-            )
+        # if np.any(valid_frames_left > -1):
+        #     print("Running SMPLify-X inside segmentation window for left hand...")
+        #     compute_smpl_x_poses(
+        #         rps_folder=rps_folder,
+        #         result_folder=result_folder,
+        #         images_folder=images_folder,
+        #         valid_frames=reconstruct_left,
+        #         weights=valid_frames_left,
+        #         hand="left",
+        #     )
 
         print("Finding sign class...")
         compute_sign_class(

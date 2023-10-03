@@ -7,17 +7,25 @@ read -s -p "Password: " password
 username=$(urle $username)
 password=$(urle $password)
 
+echo -e "\nInstalling git lfs..."
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt install git-lfs
+
+
 echo -e "\nDownloading SGNify..."
 wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=sgnify&resume=1&sfile=data.zip' -O 'data.zip' --no-check-certificate --continue
 unzip data.zip -d data/
 rm data.zip
 
+
 GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --recursive
 conda env create -f environment.yml 
 eval "$(conda shell.bash hook)"
 git submodule update --init --recursive
+conda activate sgnify
 
 cd spectre
+git submodule foreach git lfs pull
 echo -e "\nDownload pretrained SPECTRE model..."
 gdown --id 1vmWX6QmXGPnXTXWFgj67oHzOoOmxBh6B
 mkdir -p pretrained/

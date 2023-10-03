@@ -609,8 +609,9 @@ def fit_single_frame(img,
                     warnings.simplefilter('ignore', category=UserWarning)
                     body_model.reset_params(**prev_params)
 
-            for opt_idx, curr_weights in enumerate(tqdm(opt_weights[start_opt_stage:], desc='Stage') if interactive else opt_weights[start_opt_stage:]):
-
+            # @minseok : changed maximum iteration numbers
+            max_iter_number = 3
+            for opt_idx, curr_weights in enumerate(tqdm(opt_weights[start_opt_stage:max_iter_number], desc='Stage') if interactive else opt_weights[start_opt_stage:max_iter_number]):
                 body_params = list(body_model.parameters())
 
                 final_params = list(
