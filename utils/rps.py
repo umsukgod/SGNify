@@ -208,7 +208,7 @@ def interpolate(*, pkl_1, pkl_2, save_folder, reference_start, reference_end, en
             "--save_folder",
             save_folder,
             "--config",
-            "SGNify/cfg_files/fit_smplifyx_ref_sv.yaml",
+            "cfg_files/fit_smplifyx_ref_sv.yaml",
             "--reference_start",
             str(reference_start),
             "--reference_end",

@@ -21,10 +21,17 @@ import shutil
 
 import numpy as np
 import pyrender
-import rotation_conversion
+# import rotation_conversion
+from pytorch3d.transforms import axis_angle_to_quaternion, quaternion_to_axis_angle
 import smplx
 import torch
 import trimesh
+
+import sys
+from os import path
+sys.path.append(path.abspath('./smplifyx'))
+sys.path.append(path.abspath('./'))
+
 from cmd_parser import parse_config
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
@@ -42,7 +49,7 @@ def key_positions(pkl_paths, model, hand, reference_start, reference_end):
     hand_start = torch.einsum(
         "bi,ij->bj", [torch.tensor(data_start.get(hand + "_hand_pose"), device=device, dtype=dtype), components]
     )
-    hand_start_quat = rotation_conversion.axis_angle_to_quaternion(torch.reshape(hand_start, (15, 3)))
+    hand_start_quat = axis_angle_to_quaternion(torch.reshape(hand_start, (15, 3)))
 
     # get quaternion end
     with open(pkl_paths[1], "rb") as f:
@@ -50,7 +57,7 @@ def key_positions(pkl_paths, model, hand, reference_start, reference_end):
     hand_end = torch.einsum(
         "bi,ij->bj", [torch.tensor(data_end.get(hand + "_hand_pose"), device=device, dtype=dtype), components]
     )
-    hand_end_quat = rotation_conversion.axis_angle_to_quaternion(torch.reshape(hand_end, (15, 3)))
+    hand_end_quat = axis_angle_to_quaternion(torch.reshape(hand_end, (15, 3)))
 
     # interpolate
     key_times = [0, reference_end - reference_start]
@@ -75,7 +82,7 @@ def quat2pca(hand_pose_interp, model, hand):
     else:
         components = model.right_hand_components
 
-    hand_pose_aa = rotation_conversion.quaternion_to_axis_angle(
+    hand_pose_aa = quaternion_to_axis_angle(
         torch.tensor(hand_pose_interp, dtype=dtype, device=device)
     )
     inverse = np.linalg.pinv(components.detach().cpu().numpy())
