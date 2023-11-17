@@ -102,7 +102,7 @@ def call_sgnify_0(
             "--beta_path",
             beta_path,
             "--expression_precomputed",
-            "True",
+            "False",
             "--expression_path",
             expression_path,
             "--use_symmetry",

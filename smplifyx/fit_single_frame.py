@@ -176,6 +176,7 @@ def fit_single_frame(img,
                 print('beta_precomputed == True but no beta files (.pkl) found.')
                 exit()
 
+    handshape_reference = None
     if use_hands:
         if hand_pose_prior_weights is None:
             hand_pose_prior_weights = [1e2, 5 * 1e1, 1e1, .5 * 1e1]
@@ -226,6 +227,7 @@ def fit_single_frame(img,
                 len(shape_weights),
                 len(body_pose_prior_weights))
 
+    expression_precomputed = kwargs.get('expression_precomputed', False)
     if use_face:
         expression_precomputed = kwargs.get('expression_precomputed', False)
         if expression_precomputed:
