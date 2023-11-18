@@ -129,7 +129,6 @@ def run_mediapipe_hands(*, output_folder, confidence, static_image_mode, keypoin
 
                         if not (np.array(person_data["hand_left_keypoints_2d"])).any():
                             if lhand_swap.any():
-                                print("left hand swap")
                                 person_data["hand_left_keypoints_2d"] = lhand_swap.tolist()[0]
                                 lhand = np.zeros((1, 63))
                             else:
