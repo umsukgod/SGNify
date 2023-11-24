@@ -34,22 +34,23 @@ def compute_smpl_x_poses(*, rps_folder, hand, result_folder, images_folder, vali
 
     # Do it inside a loop due to ncg memory issue:
     for frame_int in tqdm.tqdm(valid_frames):
-        frame_prefix = f"{frame_int:03}"
-        rps_image_path = rps_images_folder.joinpath(f"{frame_prefix}.png")
-        rps_image_path.symlink_to(images_folder.joinpath(f"{frame_prefix}.png"))
-        rps_keypoint_path = rps_keypoints_folder.joinpath(f"{frame_prefix}_keypoints.json")
+        if frame_int % 10 == 0 or True:
+            frame_prefix = f"{frame_int:03}"
+            rps_image_path = rps_images_folder.joinpath(f"{frame_prefix}.png")
+            rps_image_path.symlink_to(images_folder.joinpath(f"{frame_prefix}.png"))
+            rps_keypoint_path = rps_keypoints_folder.joinpath(f"{frame_prefix}_keypoints.json")
 
-        confidence = weights[frame_int] + 0.5
-        mp_keypoints_path = result_folder.joinpath(
-            "mp_keypoints_{:.1f}".format(confidence), f"{frame_prefix}_keypoints.json"
-        )
-        rps_keypoint_path.unlink(missing_ok=True)
-        rps_keypoint_path.symlink_to(mp_keypoints_path)
+            confidence = weights[frame_int] + 0.5
+            mp_keypoints_path = result_folder.joinpath(
+                "mp_keypoints_{:.1f}".format(confidence), f"{frame_prefix}_keypoints.json"
+            )
+            rps_keypoint_path.unlink(missing_ok=True)
+            rps_keypoint_path.symlink_to(mp_keypoints_path)
 
-        call_smplify_x(data_folder=rps_folder, output_folder=result_folder.joinpath("rps", hand))
+            call_smplify_x(data_folder=rps_folder, output_folder=result_folder.joinpath("rps", hand))
 
-        rps_image_path.unlink()
-        rps_keypoint_path.unlink()
+            rps_image_path.unlink()
+            rps_keypoint_path.unlink()
 
     return valid_frames
 

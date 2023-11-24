@@ -145,6 +145,7 @@ def main(args):
 
     with torch.no_grad():
         for chunk_id in range(len(overlapping_indices)):
+            chunk_id = int(chunk_id)
             print(
                 "Processing frames {} to {}".format(overlapping_indices[chunk_id][0], overlapping_indices[chunk_id][-1])
             )

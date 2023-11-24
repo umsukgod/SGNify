@@ -519,6 +519,7 @@ class SMPLifyLoss(nn.Module):
 
         shape_loss = 0.0
         if self.beta_precomputed == False:
+            exit(0)
             shape_loss = torch.sum(self.shape_prior(
                 body_model_output.betas)) * self.shape_weight ** 2
 
