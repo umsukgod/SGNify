@@ -13,7 +13,7 @@ def get_end(result_path):
 
 def extract_frames(*, video_path, output_folder):
     return run(
-        ["ffmpeg", "-i", video_path, output_folder.joinpath("%03d.png"), "-nostdin"],
+        ["ffmpeg", "-i", video_path, "-vf","fps=30",output_folder.joinpath("%03d.png"), "-nostdin", "-loglevel", "error"],
         check=True,
     )
 

@@ -7,7 +7,7 @@ from subprocess import run
 
 import numpy as np
 import tqdm.auto as tqdm
-
+import pandas
 from utils import (
     compute_betas,
     compute_rps,
@@ -34,7 +34,7 @@ def compute_smpl_x_poses(*, rps_folder, hand, result_folder, images_folder, vali
 
     # Do it inside a loop due to ncg memory issue:
     for frame_int in tqdm.tqdm(valid_frames):
-        if frame_int % 10 == 0 or True:
+        if frame_int % 10 == 0:
             frame_prefix = f"{frame_int:03}"
             rps_image_path = rps_images_folder.joinpath(f"{frame_prefix}.png")
             rps_image_path.symlink_to(images_folder.joinpath(f"{frame_prefix}.png"))
@@ -236,6 +236,7 @@ def run_sgnify(
             symmetry_weight = symmetry_weight / 5
 
         if frame_int == 1:
+            '''sgnify for 1st frame, no prev_res_path, beta_precomputed=True exist in both'''
             call_sgnify_0(
                 output_folder=output_folder,
                 data_folder=tmp_data_path,
@@ -264,6 +265,13 @@ def run_sgnify(
 
 
 def main(args):
+    print("###########################  SGNIFY  ##############################")
+    if args.sign_video_index != -1:
+        csv_data = pandas.read_csv('sign_video_index.csv',header=None)
+        video_name = csv_data[1][int(args.sign_video_index)-1]
+        video_prefix = str(csv_data[0][int(args.sign_video_index)-1])
+        video_path = Path("./data/c_lab/"+video_prefix+"_"+video_name).resolve()
+        output_folder = Path(args.output_folder).joinpath(video_path.stem).resolve()
     if args.video_path != "None":
         video_path = Path(args.video_path).resolve()
         output_folder = Path(args.output_folder).joinpath(video_path.stem).resolve()
@@ -321,7 +329,13 @@ def main(args):
         if args.sign_class == "-1":
             args.sign_class = sign_class_path.read_text().strip()
     else:
-        if args.video_path != "None":
+        if args.sign_video_index != -1:
+            print("")
+            print("Getting video from index {};".format(int(args.sign_video_index)),video_path)
+            print("")
+            extract_frames(video_path=video_path, output_folder=result_folder.joinpath("images"))
+
+        elif args.video_path != "None":
             # 0. Extract frames from video
             print("Extracting frames with FFmpeg...")
             extract_frames(video_path=video_path, output_folder=result_folder.joinpath("images"))
@@ -425,6 +439,10 @@ def main(args):
         print("Finding betas...")
         compute_betas(rps_folder=rps_folder, beta_path=beta_path)
 
+        if args.custom_beta_path != "None":
+            print("use custom beta data from :", args.custom_beta_path)
+            beta_path = args.custom_beta_path
+
         # 6. Run SPECTRE
         print("Running SPECTRE...")
         call_spectre(images_folder=images_folder, output_folder=spectre_folder)
@@ -478,6 +496,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("--skip_preprocessing", required=False, action="store_true", help="Skip preprocessing of data")
     parser.add_argument("--quantitative_data", required=False, action="store_true", help="Analyze vicon frames")
+    parser.add_argument("--custom_beta_path", required=False, default="None", help="Custom SMPL-X file")
+    parser.add_argument("--sign_video_index", required=False, default=-1, help="Custom sign video index")
 
     args = parser.parse_args()
     main(args)

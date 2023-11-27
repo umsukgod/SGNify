@@ -168,6 +168,8 @@ def fit_single_frame(img,
             if beta_path:
                 with open(beta_path, 'rb') as pkl_f:
                     betas = (pickle.load(pkl_f)) #['shape'] # add shape if adding Yao's shape
+                    if isinstance(betas, dict):
+                        betas = betas['betas']
 
                 betas_num = body_model.betas.shape[1]
                 # betas provided externally, not optimized
@@ -597,7 +599,24 @@ def fit_single_frame(img,
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore', category=UserWarning)
                     body_model.reset_params(**new_params)
+                    # if beta_precomputed:
+                    #     with open(beta_path, 'rb') as pkl_f:
+                    #         custom_body_model = (pickle.load(pkl_f))
+                    #         if isinstance(custom_body_model, dict): # check if is is customized
+                    #             body_model.global_orient[0][2].data *= 0.0
+                    #             body_model.global_orient.requires_grad = False
+                    #             body_model.global_orient[0][0] = float(custom_body_model['global_orient'][0][0])
+                    #             body_model.global_orient[0][1] = float(custom_body_model['global_orient'][0][1])
+                    #             body_model.global_orient[0][2] = float(custom_body_model['global_orient'][0][2])
+                                # camera.translation.requires_grad = False
+                                # camera.translation[0][0] = float(custom_body_model['camera_translation'][0][0])
+                                # camera.translation[0][1] = float(custom_body_model['camera_translation'][0][1])
+                                # camera.translation[0][2] = float(custom_body_model['camera_translation'][0][2])
 
+                                # body_model.transl.requires_grad = False
+                                # body_model.transl[0][0] = float(custom_body_model['transl'][0][0])
+                                # body_model.transl[0][1] = float(custom_body_model['transl'][0][1])
+                                # body_model.transl[0][2] = float(custom_body_model['transl'][0][2])
                 if use_vposer:
                     with torch.no_grad():
                         pose_embedding.fill_(0)
