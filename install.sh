@@ -32,4 +32,4 @@ mkdir -p pretrained/
 mv spectre_model.tar pretrained/
 cd ..
 
-cp -r data/FLAME2020 spectre/data/FLAME2020
+cp -r data/data/FLAME2020 spectre/data/FLAME2020
