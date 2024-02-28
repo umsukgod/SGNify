@@ -308,6 +308,11 @@ def parse_config(argv=None):
                         type=float,
                         help='The weight of the hand temporal loss')
 
+    parser.add_argument('--expose_folder',
+                        default=None,
+                        type=str,
+                        help='ExPose initial guess')
+
     # SGNify constraints
     # parser.add_argument('--class_sign', type=str, default='-1',
     #                     help='The sign of the class')

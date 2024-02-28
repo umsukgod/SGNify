@@ -4,11 +4,13 @@ import pickle
 import shutil
 from pathlib import Path
 from subprocess import run
+import os
 
 import numpy as np
 import tqdm.auto as tqdm
 import pandas
 from utils import (
+    compute_expose_betas,
     compute_betas,
     compute_rps,
     compute_sign_class,
@@ -54,6 +56,28 @@ def compute_smpl_x_poses(*, rps_folder, hand, result_folder, images_folder, vali
 
     return valid_frames
 
+def call_expose(*, images_folder, output_folder):
+    return run(
+        [
+            "python",
+            "demo.py",
+            "--image-folder",
+            images_folder,
+            "--exp-cfg",
+            "data/conf.yaml",
+            "--output-folder",
+            output_folder,
+            "--show",
+            "False",
+            "--save-params",
+            "True",
+            "--save-vis",
+            "True",
+            "--save-mesh",
+            "False;",
+        ],
+        check=True,
+    )
 
 def call_smplify_x(*, data_folder, output_folder):
     return run(
@@ -83,6 +107,8 @@ def call_sgnify_0(
     right_handpose_path,
     left_reference_weight,
     right_reference_weight,
+    expose_folder,
+    result_folder,
 ):
     return run(
         [
@@ -118,6 +144,11 @@ def call_sgnify_0(
             right_handpose_path,
             "--right_reference_weight",
             str(right_reference_weight),
+            "--expose_folder",
+            expose_folder,
+            "--result_folder",
+            result_folder,
+
         ],
         check=True,
     )
@@ -135,6 +166,8 @@ def call_sgnify(
     right_handpose_path,
     left_reference_weight,
     right_reference_weight,
+    expose_folder,
+    result_folder,
 ):
     return run(
         [
@@ -166,6 +199,10 @@ def call_sgnify(
             str(right_reference_weight),
             "--beta_precomputed",
             "True",
+            "--expose_folder",
+            expose_folder,
+            "--result_folder",
+            result_folder,
         ],
         check=True,
     )
@@ -189,10 +226,12 @@ def run_sgnify(
     left_interp_folder,
     right_interp_folder,
     segment_path,
+    expose_folder,
+    indentifier,
 ):
-    for frame_int in tqdm.trange(1, get_end(result_folder) + 1):
+    for frame_int in tqdm.trange(30, get_end(result_folder) + 1-10):
         frame_prefix = f"{frame_int:03}"
-        prev_res_path = output_folder.joinpath("results", f"{frame_int-1:03}.pkl")
+        prev_res_path = output_folder.joinpath("../results_"+indentifier, f"{frame_int-1:03}.pkl")
 
         tmp_data_path = result_folder.joinpath("tmp", "data")
         shutil.rmtree(tmp_data_path, ignore_errors=True)
@@ -235,7 +274,7 @@ def run_sgnify(
             right_reference_weight = right_reference_weight / 5
             symmetry_weight = symmetry_weight / 5
 
-        if frame_int == 1:
+        if frame_int == 30:
             '''sgnify for 1st frame, no prev_res_path, beta_precomputed=True exist in both'''
             call_sgnify_0(
                 output_folder=output_folder,
@@ -248,6 +287,8 @@ def run_sgnify(
                 right_reference_weight=right_reference_weight,
                 use_symmetry=use_symmetry,
                 symmetry_weight=symmetry_weight,
+                expose_folder=expose_folder,
+                result_folder="../results_"+indentifier
             )
         else:
             call_sgnify(
@@ -261,6 +302,8 @@ def run_sgnify(
                 right_handpose_path=right_handpose_path,
                 left_reference_weight=left_reference_weight,
                 right_reference_weight=right_reference_weight,
+                expose_folder=expose_folder,
+                result_folder="../results_"+indentifier
             )
 
 
@@ -310,9 +353,19 @@ def main(args):
 
     sign_class_path = result_folder.joinpath("sign_class.txt")
 
+    expose_folder = result_folder.joinpath("expose")
+    expose_folder.mkdir(exist_ok=True, parents=True)
+
     # Invariance constraint
     reference = 90
     symmetry = 90
+
+    # print("Creating video...")
+    # create_video(
+    #     images_folder=output_folder.joinpath("images", ""),
+    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
+    # )
+    # exit(0)
 
     # PRE-PROCESS:
     # 0. Extract frames from video
@@ -343,6 +396,12 @@ def main(args):
             # 0. Copy frames from folder
             print("Copying frames...")
             copy_frames(image_dir_path=image_dir_path, output_folder=result_folder.joinpath("images"))
+
+        print("Run ExPose")
+        wd = os.getcwd()
+        os.chdir("expose")
+        call_expose(images_folder=images_folder, output_folder=expose_folder)
+        os.chdir(wd)
 
         # 1. Run VitPose and MediaPipe on each frame
         # VitPose
@@ -420,12 +479,13 @@ def main(args):
             sign_class_path=sign_class_path,
         )
 
-        if args.sign_class == "-1":
-            args.sign_class = sign_class_path.read_text().strip()
-
         # 4. Find RPS (for now we do not have a weighted average)
         # for now we only have the rps for subclasses A
         print("Finding the RPS using valid MediaPipe frames...")
+
+        if args.sign_class == "-1":
+            args.sign_class = sign_class_path.read_text().strip()
+
         compute_rps(
             sign_class=args.sign_class,
             rps_folder=rps_folder,
@@ -437,6 +497,7 @@ def main(args):
 
         # 5. Find betas
         print("Finding betas...")
+        # compute_expose_betas(expose_folder=expose_folder, beta_path=beta_path)
         compute_betas(rps_folder=rps_folder, beta_path=beta_path)
 
         if args.custom_beta_path != "None":
@@ -470,14 +531,23 @@ def main(args):
         left_interp_folder=left_interp_folder,
         right_interp_folder=right_interp_folder,
         segment_path=segment_path,
+        expose_folder=expose_folder,
+        indentifier=args.sign_video_index,
     )
 
+    # # Create video with the results
+    # print("Creating video...")
+    # create_video(
+    #     images_folder=output_folder.joinpath("images", "*.png"),
+    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.mp4"),
+    # )
     # Create video with the results
     print("Creating video...")
     create_video(
-        images_folder=output_folder.joinpath("images", "*.png"),
-        output_path=output_folder.joinpath(f"{args.output_name}.mp4"),
+        images_folder=output_folder.joinpath("images", ""),
+        output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
     )
+    exit(0)
 
 
 if __name__ == "__main__":

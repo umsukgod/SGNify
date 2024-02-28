@@ -28,10 +28,17 @@ def copy_frames(*, image_dir_path, output_folder):
     return
 
 
+# def create_video(*, images_folder, output_path):
+#     return run(
+#         ["ffmpeg", "-r", "60", "-pattern_type", "glob", "-i", images_folder, "-y", output_path, "-nostdin"], check=True
+#     )
+
 def create_video(*, images_folder, output_path):
     return run(
-        ["ffmpeg", "-r", "60", "-pattern_type", "glob", "-i", images_folder, "-y", output_path, "-nostdin"], check=True
+        ["ffmpeg", "-framerate", "30","-f","image2", "-start_number", "30","-i", images_folder.joinpath("%03d.png"), "-y", output_path, "-nostdin", "-vcodec", "libx264",
+        "-crf", "1" ,"-pix_fmt", "yuv420p"], check=True
     )
+
 
 
 def compute_betas(*, rps_folder, beta_path):
@@ -41,6 +48,18 @@ def compute_betas(*, rps_folder, beta_path):
         for pkl_file in pkl_files:
             with pkl_file.open("rb") as file:
                 betas.append(pickle.load(file)["betas"][0])
+
+    with beta_path.open("wb") as file:
+        pickle.dump(np.median(betas, axis=0), file, pickle.HIGHEST_PROTOCOL)
+
+def compute_expose_betas(*, expose_folder, beta_path):
+    betas = []
+    # for hand in ["left", "right"]:
+    pkl_files = list(expose_folder.glob("*.pkl"))
+    for pkl_file in pkl_files:
+        with pkl_file.open("rb") as file:
+            # breakpoint()
+            betas.append(pickle.load(file)["betas"])
 
     with beta_path.open("wb") as file:
         pickle.dump(np.median(betas, axis=0), file, pickle.HIGHEST_PROTOCOL)

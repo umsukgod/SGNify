@@ -1,6 +1,7 @@
 from utils.classify_sign import compute_sign_class
 from utils.mediapipe_hands import run_mediapipe_hands
 from utils.misc import (
+    compute_expose_betas,
     compute_betas,
     copy_frames,
     create_video,
@@ -12,6 +13,7 @@ from utils.segment_signs import segment_signs
 from utils.vitpose import run_vitpose
 
 __all__ = [
+    "compute_expose_betas",
     "compute_betas",
     "compute_rps",
     "compute_sign_class",

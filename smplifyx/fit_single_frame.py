@@ -178,6 +178,33 @@ def fit_single_frame(img,
                 print('beta_precomputed == True but no beta files (.pkl) found.')
                 exit()
 
+
+
+
+    # if expose_path is not None:
+    #     with open(expose_path, 'rb') as pkl_f:
+    #         expose_body_model = pickle.load(pkl_f)
+    #     if prev_pose is not None:
+    #         # print("prev_pose", prev_pose)
+    #         prev_pose['body'] = expose_body_model['body_pose'].reshape(1,-1)
+    #         # print("expose_body_pose", prev_pose['body_pose'])
+
+    #     if not prev_res_path:
+    #         if beta_precomputed:
+    #             beta_path = kwargs.get('beta_path', None)
+    #             if beta_path:
+    #                 with open(beta_path, 'rb') as pkl_f:
+    #                     betas = (pickle.load(pkl_f)) #['shape'] # add shape if adding Yao's shape
+    #                     if isinstance(betas, dict):
+    #                         betas = betas['betas']
+
+    #                 betas_num = body_model.betas.shape[1]
+    #                 # betas provided externally, not optimized
+    #                 body_model.betas.requires_grad = False
+    #             else:
+    #                 print('beta_precomputed == True but no beta files (.pkl) found.')
+    #                 exit()
+
     if use_hands:
         if hand_pose_prior_weights is None:
             hand_pose_prior_weights = [1e2, 5 * 1e1, 1e1, .5 * 1e1]
@@ -291,6 +318,14 @@ def fit_single_frame(img,
                                      dtype=dtype)
     else:
         body_mean_pose = body_pose_prior.get_mean().detach().cpu()
+
+
+    # if expose_path is not None:
+    #     with open(expose_path, 'rb') as pkl_f:
+    #         expose_body_model = pickle.load(pkl_f)
+    #         expose_pose_embedding = vposer.encode(torch.from_numpy(expose_body_model['body_pose'].reshape(1,63)).to(device).type(dtype)).loc.detach()
+    #         # breakpoint()
+    #         # expose_pose_embedding.requires_grad = False
 
     keypoint_data = torch.tensor(keypoints, dtype=dtype, device=device)
 
@@ -599,27 +634,38 @@ def fit_single_frame(img,
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore', category=UserWarning)
                     body_model.reset_params(**new_params)
-                    # if beta_precomputed:
-                    #     with open(beta_path, 'rb') as pkl_f:
-                    #         custom_body_model = (pickle.load(pkl_f))
-                    #         if isinstance(custom_body_model, dict): # check if is is customized
-                    #             body_model.global_orient[0][2].data *= 0.0
-                    #             body_model.global_orient.requires_grad = False
-                    #             body_model.global_orient[0][0] = float(custom_body_model['global_orient'][0][0])
-                    #             body_model.global_orient[0][1] = float(custom_body_model['global_orient'][0][1])
-                    #             body_model.global_orient[0][2] = float(custom_body_model['global_orient'][0][2])
-                                # camera.translation.requires_grad = False
-                                # camera.translation[0][0] = float(custom_body_model['camera_translation'][0][0])
-                                # camera.translation[0][1] = float(custom_body_model['camera_translation'][0][1])
-                                # camera.translation[0][2] = float(custom_body_model['camera_translation'][0][2])
+                    # if expose_path:
+                    #     with open(expose_path, 'rb') as pkl_f:
+                    #         expose_body_model = pickle.load(pkl_f)
 
-                                # body_model.transl.requires_grad = False
-                                # body_model.transl[0][0] = float(custom_body_model['transl'][0][0])
-                                # body_model.transl[0][1] = float(custom_body_model['transl'][0][1])
-                                # body_model.transl[0][2] = float(custom_body_model['transl'][0][2])
+                    #     body_model.global_orient.requires_grad = False
+                    #     body_model.betas.requires_grad = False
+                    #     # body_model.transl.requires_grad = False
+
+                    #     body_model.global_orient[0][0] = expose_body_model['global_orient'][0][0]
+                    #     body_model.global_orient[0][1] = expose_body_model['global_orient'][0][1]
+                    #     body_model.global_orient[0][2] = expose_body_model['global_orient'][0][2]
+                    #     camera.translation.requires_grad = False
+
+                    #     camera.translation[0][0] = expose_body_model['transl'][0]
+                    #     camera.translation[0][1] = expose_body_model['transl'][1]
+                    #     camera.translation[0][2] = expose_body_model['transl'][2]
+
+                    #     breakpoint()
+                    #     camera.translation[0][0] = float(expose_body_model['transl'][0])
+                    #     camera.translation[0][1] = float(expose_body_model['transl'][1])
+                    #     camera.translation[0][2] = float(expose_body_model['transl'][2])
+
+                    #     body_model.transl.requires_grad = False
+                    #     body_model.transl[0][0] = float(custom_body_model['transl'][0][0])
+                    #     body_model.transl[0][1] = float(custom_body_model['transl'][0][1])
+                    #     body_model.transl[0][2] = float(custom_body_model['transl'][0][2])
+
                 if use_vposer:
                     with torch.no_grad():
                         pose_embedding.fill_(0)
+                        # if expose_path is not None:
+                        #     pose_embedding[:] = expose_pose_embedding
             else:  # initialize with previous frame
                 if expression_precomputed:
                     prev_params['expression'] = torch.as_tensor(expression, device=device)
@@ -629,7 +675,7 @@ def fit_single_frame(img,
                     body_model.reset_params(**prev_params)
 
             # @minseok : changed maximum iteration numbers
-            max_iter_number = 4
+            max_iter_number = 5
             # breakpoint()
             if result_fn[-25:-22] == 'rps':
                 max_iter_number = 5
@@ -641,43 +687,84 @@ def fit_single_frame(img,
                     filter(lambda x: x.requires_grad, body_params))
 
                 if use_vposer:
+                    # # pose_embedding = expose_pose_embedding
+                    # if expose_path is not None:
+                    #     with torch.no_grad():
+                    #         pose_embedding[:] = expose_pose_embedding
+                    # # breakpoint()
                     final_params.append(pose_embedding)
 
                 body_optimizer, body_create_graph = optim_factory.create_optimizer(
                     final_params,
                     **kwargs)
                 body_optimizer.zero_grad()
+                try:
+                    curr_weights['data_weight'] = data_weight
+                    curr_weights['bending_prior_weight'] = (
+                        100.7 * (curr_weights['body_pose_weight'] ** 2))
+                    if use_hands:
+                        joint_weights[:, 25:67] = curr_weights['hand_weight']
+                    if use_face:
+                        joint_weights[:, 67:] = curr_weights['face_weight']
+                    loss.reset_loss_weights(curr_weights)
 
-                curr_weights['data_weight'] = data_weight
-                curr_weights['bending_prior_weight'] = (
-                    100.7 * (curr_weights['body_pose_weight'] ** 2))
-                if use_hands:
-                    joint_weights[:, 25:67] = curr_weights['hand_weight']
-                if use_face:
-                    joint_weights[:, 67:] = curr_weights['face_weight']
-                loss.reset_loss_weights(curr_weights)
+                    closure = monitor.create_fitting_closure(
+                        body_optimizer, body_model,
+                        camera=camera, gt_joints=gt_joints,
+                        joints_conf=joints_conf,
+                        joint_weights=joint_weights,
+                        loss=loss, create_graph=body_create_graph,
+                        use_vposer=use_vposer, vposer=vposer,
+                        pose_embedding=pose_embedding,
+                        return_verts=True, return_full_pose=True)
 
-                closure = monitor.create_fitting_closure(
-                    body_optimizer, body_model,
-                    camera=camera, gt_joints=gt_joints,
-                    joints_conf=joints_conf,
-                    joint_weights=joint_weights,
-                    loss=loss, create_graph=body_create_graph,
-                    use_vposer=use_vposer, vposer=vposer,
-                    pose_embedding=pose_embedding,
-                    return_verts=True, return_full_pose=True)
+                    if interactive:
+                        if use_cuda and torch.cuda.is_available():
+                            torch.cuda.synchronize()
+                        stage_start = time.time()
+                    final_loss_val = monitor.run_fitting(
+                        body_optimizer,
+                        closure, final_params,
+                        body_model,
+                        pose_embedding=pose_embedding, vposer=vposer,
+                        use_vposer=use_vposer)
 
-                if interactive:
-                    if use_cuda and torch.cuda.is_available():
-                        torch.cuda.synchronize()
-                    stage_start = time.time()
-                final_loss_val = monitor.run_fitting(
-                    body_optimizer,
-                    closure, final_params,
-                    body_model,
-                    pose_embedding=pose_embedding, vposer=vposer,
-                    use_vposer=use_vposer)
+                except Exception as e:
+                    print("Runtime error on penetration optimzer. change the weight to zero")
+                    opt_weights[4]['scopti_weight'] = 0.0
+                    curr_weights['scopti_weight'] = 0.0
+                    curr_weights['data_weight'] = data_weight
+                    curr_weights['bending_prior_weight'] = (
+                        100.7 * (curr_weights['body_pose_weight'] ** 2))
+                    if use_hands:
+                        joint_weights[:, 25:67] = curr_weights['hand_weight']
+                    if use_face:
+                        joint_weights[:, 67:] = curr_weights['face_weight']
+                    loss.reset_loss_weights(curr_weights)
 
+                    closure = monitor.create_fitting_closure(
+                        body_optimizer, body_model,
+                        camera=camera, gt_joints=gt_joints,
+                        joints_conf=joints_conf,
+                        joint_weights=joint_weights,
+                        loss=loss, create_graph=body_create_graph,
+                        use_vposer=use_vposer, vposer=vposer,
+                        pose_embedding=pose_embedding,
+                        return_verts=True, return_full_pose=True)
+
+                    if interactive:
+                        if use_cuda and torch.cuda.is_available():
+                            torch.cuda.synchronize()
+                        stage_start = time.time()
+
+                    final_loss_val = monitor.run_fitting(
+                        body_optimizer,
+                        closure, final_params,
+                        body_model,
+                        pose_embedding=pose_embedding, vposer=vposer,
+                        use_vposer=use_vposer)
+
+                # print('here')
                 if interactive:
                     if use_cuda and torch.cuda.is_available():
                         torch.cuda.synchronize()
@@ -732,6 +819,38 @@ def fit_single_frame(img,
             results[min_idx]['result']['body_pose'] = body_pose.detach().cpu().numpy()
             results[min_idx]['result']['pose_embedding'] = pose_embedding.detach().cpu().numpy()
             results[min_idx]['result']['gender'] = body_model.gender
+
+            expose_folder = kwargs.get('expose_folder', None)
+            img_index = os.path.basename(out_img_fn)[:3]
+
+            if expose_folder is not None:
+                expose_path = expose_folder+"/"+img_index+"_params.pkl"
+            else:
+                expose_path= None
+            if expose_path is not None:
+                with open(expose_path, 'rb') as pkl_f:
+                    expose_body_model = pickle.load(pkl_f)
+                expose_body_pose = expose_body_model['body_pose'].reshape(1,-1)
+                expose_global_orient = expose_body_model['global_orient']
+                expose_transl= expose_body_model['transl']
+
+            if expose_path is not None:
+                right_hand_pose = results[min_idx]['result']['right_hand_pose']
+                right_hand_pose = torch.einsum('bi,ij->bj', [torch.from_numpy(\
+                    results[min_idx]['result']['right_hand_pose'].astype(np.float32)).to(device), body_model.right_hand_components])
+                right_hand_pose = right_hand_pose.detach().cpu().numpy().reshape(15,3)
+
+                left_hand_pose = results[min_idx]['result']['left_hand_pose']
+                left_hand_pose = torch.einsum('bi,ij->bj', [torch.from_numpy(\
+                    results[min_idx]['result']['left_hand_pose'].astype(np.float32)).to(device), body_model.left_hand_components])
+
+                left_hand_pose= left_hand_pose.detach().cpu().numpy().reshape(15,3)
+
+                results[min_idx]['result']['right_hand_pose_full'] = right_hand_pose
+                results[min_idx]['result']['left_hand_pose_full'] = left_hand_pose
+                results[min_idx]['result']['expose_body_pose'] = expose_body_pose
+                results[min_idx]['result']['expose_global_orient'] = expose_global_orient
+                results[min_idx]['result']['expose_transl'] = expose_transl
             pickle.dump(results[min_idx]['result'], result_file, protocol=2)
 
         if save_meshes or visualize:

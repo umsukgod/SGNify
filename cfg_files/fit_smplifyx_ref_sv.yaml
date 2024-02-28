@@ -11,7 +11,7 @@ output_folder: 'smplx_debug'
 prior_folder: 'priors'
 model_folder: 'data/models'
 result_folder: 'results'
-gender: "neutral"
+gender: "female"
 model_type: 'smplx'
 # Flag for using the GPU
 use_cuda: True
@@ -44,14 +44,14 @@ ftol: -1.0
 gtol: 1e-9
 lr: 1.0
 # Max number of optimization iterations
-maxiters: 30
+maxiters: 20
 interactive: False
 visualize: False
 # Relative change in loss value
 body_pose_prior_weights:
-    - 4.04e2
-    - 4.04e2
-    - 57.4e0
+    - 4.04e1
+    - 4.04e1
+    - 5.74e0
     - 4.78e0
     - 4.78e0
 shape_weights:
@@ -85,10 +85,10 @@ jaw_pose_prior_weights:
     - 47.8,478,478
 hand_joints_weights:
     - 0.0
-    - 0.1
-    - 0.1
-    - 0.2 #added later
-    - 4.0 
+    - 0.2
+    - 0.2
+    - 0.4 #added later
+    - 8.0 
 face_joints_weights:
     - 0.0
     - 0.0

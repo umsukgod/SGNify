@@ -112,12 +112,12 @@ def main(**args):
                         create_reye_pose=True,
                         create_transl=True,
                         num_expression_coeffs = 50,
-                        num_betas = 300,
+                        num_betas = 10,
                         dtype=dtype,
                         **args)
     model_params.pop('gender')
 
-    neutral_model = smplx.create(gender='neutral', **model_params)
+    neutral_model = smplx.create(gender='female', **model_params)
 
     # Create the camera object
     focal_length = args.get('focal_length')

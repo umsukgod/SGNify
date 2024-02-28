@@ -113,7 +113,7 @@ def guess_init(model,
 
 class FittingMonitor(object):
     def __init__(self, summary_steps=1, visualize=False,
-                 maxiters=100, ftol=2e-09, gtol=1e-05,
+                 maxiters=10, ftol=2e-09, gtol=1e-05,
                  body_color=(1.0, 1.0, 0.9, 1.0),
                  model_type='smpl',
                  **kwargs):
