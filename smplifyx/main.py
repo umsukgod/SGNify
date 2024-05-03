@@ -117,7 +117,7 @@ def main(**args):
                         **args)
     model_params.pop('gender')
 
-    neutral_model = smplx.create(gender='female', **model_params)
+    neutral_model = smplx.create(gender='neutral', **model_params)
 
     # Create the camera object
     focal_length = args.get('focal_length')

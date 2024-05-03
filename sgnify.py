@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from subprocess import run
 import os
-
+import random
 import numpy as np
 import tqdm.auto as tqdm
 import pandas
@@ -34,15 +34,19 @@ def compute_smpl_x_poses(*, rps_folder, hand, result_folder, images_folder, vali
     shutil.rmtree(rps_keypoints_folder, ignore_errors=True)
     rps_keypoints_folder.mkdir(parents=True)
 
+    # breakpoint()
+    num_valid_frames = len(valid_frames)
+    sample_freq = num_valid_frames //5
+    count = 0
     # Do it inside a loop due to ncg memory issue:
     for frame_int in tqdm.tqdm(valid_frames):
-        if frame_int % 10 == 0:
+        if count % sample_freq == 0:
             frame_prefix = f"{frame_int:03}"
             rps_image_path = rps_images_folder.joinpath(f"{frame_prefix}.png")
             rps_image_path.symlink_to(images_folder.joinpath(f"{frame_prefix}.png"))
             rps_keypoint_path = rps_keypoints_folder.joinpath(f"{frame_prefix}_keypoints.json")
 
-            confidence = weights[frame_int] + 0.5
+            confidence = weights[frame_int] + 0.8
             mp_keypoints_path = result_folder.joinpath(
                 "mp_keypoints_{:.1f}".format(confidence), f"{frame_prefix}_keypoints.json"
             )
@@ -53,6 +57,7 @@ def compute_smpl_x_poses(*, rps_folder, hand, result_folder, images_folder, vali
 
             rps_image_path.unlink()
             rps_keypoint_path.unlink()
+        count+=1
 
     return valid_frames
 
@@ -360,12 +365,12 @@ def main(args):
     reference = 90
     symmetry = 90
 
-    # print("Creating video...")
-    # create_video(
-    #     images_folder=output_folder.joinpath("images", ""),
-    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
-    # )
-    # exit(0)
+    print("Creating video...")
+    create_video(
+        images_folder=output_folder.joinpath("images", ""),
+        output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
+    )
+    exit(0)
 
     # PRE-PROCESS:
     # 0. Extract frames from video
@@ -410,7 +415,8 @@ def main(args):
 
         # MediaPipe
         print("Extracting 2D keypoints with MediaPipe for RPS...")
-        confidences = np.arange(0.6, 1.0, 0.1)
+        # confidences = np.arange(0.6, 1.0, 0.1)
+        confidences = np.arange(0.9, 1.0, 0.1)
         for confidence in confidences:
             mp_folder = result_folder.joinpath("mp_keypoints_{:.1f}".format(confidence))
             shutil.rmtree(mp_folder, ignore_errors=True)
@@ -419,7 +425,8 @@ def main(args):
                 output_folder=result_folder, confidence=confidence, static_image_mode=True, keypoint_folder=mp_folder
             )
 
-        mp_files = ["mp_keypoints_0.6.pkl", "mp_keypoints_0.7.pkl", "mp_keypoints_0.8.pkl", "mp_keypoints_0.9.pkl"]
+        # mp_files = ["mp_keypoints_0.6.pkl", "mp_keypoints_0.7.pkl", "mp_keypoints_0.8.pkl", "mp_keypoints_0.9.pkl"]
+        mp_files = ["mp_keypoints_0.9.pkl"]
         mp_results = []
         for pkl_file in mp_files:
             with (result_folder.joinpath(pkl_file)).open("rb") as file:
@@ -428,6 +435,11 @@ def main(args):
         valid_frames_right = (np.ones((get_end(result_folder) + 1))) * -1.0
         valid_frames_left = (np.ones((get_end(result_folder) + 1))) * -1.0
 
+
+        # 0.5 wil be added at compute_smpl_x_poses.
+        # fill from low confidence and then update to high confidence if the frame have the higher confidence
+        # This is because the mediapipe hand can not generate confidence itself. 
+        # We can only set the min_hand_detection_confidence
         for weight in range(len(mp_files)):
             valid_frames_right[list(map(int, mp_results[weight]["Right"]))] = (weight + 1) / 10
             valid_frames_left[list(map(int, mp_results[weight]["Left"]))] = (weight + 1) / 10
@@ -479,12 +491,15 @@ def main(args):
             sign_class_path=sign_class_path,
         )
 
+        # RPS : reference pose shape
         # 4. Find RPS (for now we do not have a weighted average)
         # for now we only have the rps for subclasses A
         print("Finding the RPS using valid MediaPipe frames...")
 
         if args.sign_class == "-1":
             args.sign_class = sign_class_path.read_text().strip()
+        else:
+            print("sign_class by args : ", args.sign_class)
 
         compute_rps(
             sign_class=args.sign_class,
@@ -545,7 +560,7 @@ def main(args):
     print("Creating video...")
     create_video(
         images_folder=output_folder.joinpath("images", ""),
-        output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
+        output_path=output_folder.joinpath(f"../{args.sign_video_index}.mp4"),
     )
     exit(0)
 
