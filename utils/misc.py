@@ -33,10 +33,10 @@ def copy_frames(*, image_dir_path, output_folder):
 #         ["ffmpeg", "-r", "60", "-pattern_type", "glob", "-i", images_folder, "-y", output_path, "-nostdin"], check=True
 #     )
 
-def create_video(*, images_folder, output_path):
+def create_video(*, images_folder, output_path, active_frames):
     return run(
         # ["ffmpeg", "-framerate", "30","-f","image2", "-start_number", "1","-i", images_folder.joinpath("%03d.png"), "-y", output_path, "-nostdin", "-vcodec", "libx264",
-        ["ffmpeg", "-framerate", "30", "-s", "700x466","-f","image2",  "-start_number", "30","-i", images_folder.joinpath("%03d.png"), "-y", output_path, "-nostdin", "-vcodec", "libx264",
+        ["ffmpeg", "-framerate", "30", "-s", "700x466","-f","image2",  "-start_number", str(active_frames[0]),"-i", images_folder.joinpath("%03d.png"), "-y", output_path, "-nostdin", "-vcodec", "libx264",
         "-crf", "1" ,"-pix_fmt", "yuv420p"], check=True
     )
 

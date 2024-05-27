@@ -233,8 +233,10 @@ def run_sgnify(
     segment_path,
     expose_folder,
     indentifier,
+    active_frames,
 ):
-    for frame_int in tqdm.trange(30, get_end(result_folder) + 1-10):
+    # for frame_int in tqdm.trange(30, get_end(result_folder) + 1-10):
+    for frame_int in tqdm.tqdm(active_frames):
         frame_prefix = f"{frame_int:03}"
         prev_res_path = output_folder.joinpath("../results_"+indentifier, f"{frame_int-1:03}.pkl")
 
@@ -279,7 +281,7 @@ def run_sgnify(
             right_reference_weight = right_reference_weight / 5
             symmetry_weight = symmetry_weight / 5
 
-        if frame_int == 30:
+        if frame_int == active_frames[0]:
             '''sgnify for 1st frame, no prev_res_path, beta_precomputed=True exist in both'''
             call_sgnify_0(
                 output_folder=output_folder,
@@ -365,12 +367,12 @@ def main(args):
     reference = 90
     symmetry = 90
 
-    print("Creating video...")
-    create_video(
-        images_folder=output_folder.joinpath("images", ""),
-        output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
-    )
-    exit(0)
+    # print("Creating video...")
+    # create_video(
+    #     images_folder=output_folder.joinpath("images", ""),
+    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
+    # )
+    # exit(0)
 
     # PRE-PROCESS:
     # 0. Extract frames from video
@@ -402,11 +404,11 @@ def main(args):
             print("Copying frames...")
             copy_frames(image_dir_path=image_dir_path, output_folder=result_folder.joinpath("images"))
 
-        print("Run ExPose")
-        wd = os.getcwd()
-        os.chdir("expose")
-        call_expose(images_folder=images_folder, output_folder=expose_folder)
-        os.chdir(wd)
+        # print("Run ExPose")
+        # wd = os.getcwd()
+        # os.chdir("expose")
+        # call_expose(images_folder=images_folder, output_folder=expose_folder)
+        # os.chdir(wd)
 
         # 1. Run VitPose and MediaPipe on each frame
         # VitPose
@@ -457,6 +459,11 @@ def main(args):
         with segment_path.open() as json_file:
             segment = json.load(json_file)
         reconstruct_left, reconstruct_right = compute_valid_frames(result_folder, segment)
+
+        # valid_frames = sorted(np.unique(reconstruct_left+reconstruct_right))
+
+        end_frame = min(segment['t4']+10, get_end(result_folder))
+        active_frames = [*range(segment['start'], end_frame)]
 
         # 3. Run SMPLify-X on frames selected that have MP keypoints
         # This provides the RPS and betas
@@ -548,6 +555,7 @@ def main(args):
         segment_path=segment_path,
         expose_folder=expose_folder,
         indentifier=args.sign_video_index,
+        active_frames=active_frames
     )
 
     # # Create video with the results
@@ -561,6 +569,7 @@ def main(args):
     create_video(
         images_folder=output_folder.joinpath("images", ""),
         output_path=output_folder.joinpath(f"../{args.sign_video_index}.mp4"),
+        active_frames=active_frames,
     )
     exit(0)
 
