@@ -367,10 +367,17 @@ def main(args):
     reference = 90
     symmetry = 90
 
+    # with segment_path.open() as json_file:
+    #     segment = json.load(json_file)
+
+    # end_frame = min(segment['t4']+10, get_end(result_folder))
+    # active_frames = [*range(segment['start'], end_frame)]
+
     # print("Creating video...")
     # create_video(
     #     images_folder=output_folder.joinpath("images", ""),
-    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.avi"),
+    #     output_path=output_folder.joinpath(f"../{args.sign_video_index}.mp4"),
+    #     active_frames=active_frames,
     # )
     # exit(0)
 
