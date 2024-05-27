@@ -404,11 +404,11 @@ def main(args):
             print("Copying frames...")
             copy_frames(image_dir_path=image_dir_path, output_folder=result_folder.joinpath("images"))
 
-        # print("Run ExPose")
-        # wd = os.getcwd()
-        # os.chdir("expose")
-        # call_expose(images_folder=images_folder, output_folder=expose_folder)
-        # os.chdir(wd)
+        print("Run ExPose")
+        wd = os.getcwd()
+        os.chdir("expose")
+        call_expose(images_folder=images_folder, output_folder=expose_folder)
+        os.chdir(wd)
 
         # 1. Run VitPose and MediaPipe on each frame
         # VitPose
